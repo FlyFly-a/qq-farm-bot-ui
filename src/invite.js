@@ -11,11 +11,11 @@
  */
 
 const fs = require('fs');
-const path = require('path');
 const { types } = require('./proto');
 const { sendMsgAsync } = require('./network');
 const { toLong, log, logWarn, sleep } = require('./utils');
 const { CONFIG } = require('./config');
+const { getShareFilePath } = require('./runtime-paths');
 
 /**
  * 解析分享链接，提取 uid 和 openid
@@ -41,7 +41,7 @@ function parseShareLink(link) {
  * 读取 share.txt 文件并去重
  */
 function readShareFile() {
-    const shareFilePath = path.join(__dirname, '..', 'share.txt');
+    const shareFilePath = getShareFilePath();
     
     if (!fs.existsSync(shareFilePath)) {
         return [];
@@ -143,7 +143,7 @@ async function processInviteCodes() {
  * 清空已处理的邀请码文件
  */
 function clearShareFile() {
-    const shareFilePath = path.join(__dirname, '..', 'share.txt');
+    const shareFilePath = getShareFilePath();
     try {
         fs.writeFileSync(shareFilePath, '', 'utf8');
         log('邀请', '已清空 share.txt');

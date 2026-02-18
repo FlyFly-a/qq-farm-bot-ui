@@ -5,6 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { getResourcePath } = require('./runtime-paths');
 
 // ============ 等级经验表 ============
 let roleLevelConfig = null;
@@ -25,7 +26,7 @@ let seedAssetImageMap = new Map(); // asset_name (Crop_xxx) -> image url
  * 加载配置文件
  */
 function loadConfigs() {
-    const configDir = path.join(__dirname, '..', 'gameConfig');
+    const configDir = getResourcePath('gameConfig');
     
     // 加载等级经验配置
     try {

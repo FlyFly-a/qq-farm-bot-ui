@@ -20,6 +20,12 @@ const ACCOUNT_LOGS = []; // 账号操作日志
 let configRevision = Date.now();
 const OPERATION_KEYS = ['harvest', 'water', 'weed', 'bug', 'fertilize', 'plant', 'steal', 'helpWater', 'helpWeed', 'helpBug', 'taskClaim', 'sell', 'upgrade'];
 
+// 打包后 worker 由当前可执行文件以 --worker 模式启动
+const isWorkerProcess = process.env.FARM_WORKER === '1';
+if (isWorkerProcess) {
+    require('./src/worker');
+}
+
 function nextConfigRevision() {
     configRevision += 1;
     return configRevision;
@@ -148,10 +154,20 @@ function startWorker(account) {
 
     log('系统', `正在启动账号: ${account.name}`);
     
-    const workerPath = path.join(__dirname, 'src', 'worker.js');
-    const child = fork(workerPath, [], {
-        stdio: ['inherit', 'inherit', 'inherit', 'ipc']
-    });
+    let child = null;
+    if (process.pkg) {
+        // 打包后也走 fork + execPath，确保 IPC 通道可用
+        child = fork(__filename, [], {
+            execPath: process.execPath,
+            stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
+            env: { ...process.env, FARM_WORKER: '1' },
+        });
+    } else {
+        const workerPath = path.join(__dirname, 'src', 'worker.js');
+        child = fork(workerPath, [], {
+            stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
+        });
+    }
 
     workers[account.id] = {
         process: child,
@@ -180,8 +196,12 @@ function startWorker(account) {
         handleWorkerMessage(account.id, msg);
     });
 
-    child.on('exit', (code) => {
-        log('系统', `账号 ${account.name} 进程退出 (code=${code})`);
+    child.on('error', (err) => {
+        log('系统', `账号 ${account.name} 子进程启动失败: ${err && err.message ? err.message : err}`);
+    });
+
+    child.on('exit', (code, signal) => {
+        log('系统', `账号 ${account.name} 进程退出 (code=${code}, signal=${signal || 'none'})`);
         delete workers[account.id];
     });
 }
@@ -398,4 +418,6 @@ async function main() {
     }
 }
 
-main().catch(err => console.error(err));
+if (!isWorkerProcess) {
+    main().catch(err => console.error(err));
+}

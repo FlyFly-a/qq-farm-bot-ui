@@ -11,6 +11,7 @@ const { addOrUpdateAccount, deleteAccount } = require('./store');
 const store = require('./store'); // 引入 store 模块
 const { QRLoginSession, MiniProgramLoginSession } = require('./qrlogin');
 const { CookieUtils } = require('./qrutils');
+const { getResourcePath } = require('./runtime-paths');
 
 let app = null;
 let server = null;
@@ -43,9 +44,9 @@ function startAdminServer(dataProvider) {
         next();
     });
 
-    const panelDir = path.join(__dirname, '..', 'panel');
+    const panelDir = getResourcePath('panel');
     app.use(express.static(panelDir));
-    app.use('/game-config', express.static(path.join(__dirname, '..', 'gameConfig')));
+    app.use('/game-config', express.static(getResourcePath('gameConfig')));
 
     // 登录与鉴权
     app.post('/api/login', (req, res) => {

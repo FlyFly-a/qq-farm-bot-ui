@@ -3,15 +3,10 @@
  */
 
 const fs = require('fs');
-const path = require('path');
+const { getDataFile, ensureDataDir } = require('./runtime-paths');
 
-const STORE_FILE = path.join(__dirname, '..', 'data', 'store.json');
-const ACCOUNTS_FILE = path.join(__dirname, '..', 'data', 'accounts.json');
-
-function ensureDataDir() {
-    const dir = path.dirname(STORE_FILE);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-}
+const STORE_FILE = getDataFile('store.json');
+const ACCOUNTS_FILE = getDataFile('accounts.json');
 
 // ============ 全局配置 ============
 let globalConfig = {

@@ -33,7 +33,8 @@
 - 按等级要求
 
 ## 环境要求
-- Node.js 18+
+- 源码运行：Node.js 18+
+- 二进制发布运行：无需安装 Node.js
 
 ## 安装与启动
 
@@ -103,6 +104,36 @@ ADMIN_PASSWORD='你的强密码' node client.js
 默认面板端口为 `3000`：
 - 本机访问：`http://localhost:3000`
 - 局域网访问：`http://<你的IP>:3000`
+
+## 发布为免安装版本（Windows/Linux/macOS）
+
+### 构建环境（开发者机器）
+
+```bash
+npm install
+```
+
+```bash
+npm run build:release
+```
+
+构建产物输出在 `dist/` 目录。
+
+### 产物说明
+- Windows: `dist/farm-win.exe`
+- Linux: `dist/farm-linux`
+- macOS Intel: `dist/farm-macos-x64`
+- macOS Apple Silicon: `dist/farm-macos-arm64`
+
+### 用户运行方式（无需 Node.js）
+
+- Windows: 双击 exe 或在终端运行 `.\farm-win.exe`
+- Linux: `chmod +x ./farm-linux && ./farm-linux`
+- macOS: `chmod +x ./farm-macos-arm64 && ./farm-macos-arm64`（或 x64 版本）
+
+程序会在可执行文件同级目录自动创建 `data/` 并写入配置与账号数据：
+- `data/store.json`
+- `data/accounts.json`
 
 ## 登录与安全
 - 面板首次访问需要登录

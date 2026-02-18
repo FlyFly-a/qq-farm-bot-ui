@@ -3,8 +3,8 @@
  */
 
 const protobuf = require('protobufjs');
-const path = require('path');
 const { log } = require('./utils');
+const { getResourcePath } = require('./runtime-paths');
 
 // Proto 根对象与所有消息类型
 let root = null;
@@ -12,19 +12,18 @@ const types = {};
 
 async function loadProto() {
     log('系统', '正在加载 Protobuf 定义...');
-    const protoDir = path.join(__dirname, '..', 'proto');
     root = new protobuf.Root();
     await root.load([
-        path.join(protoDir, 'game.proto'),
-        path.join(protoDir, 'userpb.proto'),
-        path.join(protoDir, 'plantpb.proto'),
-        path.join(protoDir, 'corepb.proto'),
-        path.join(protoDir, 'shoppb.proto'),
-        path.join(protoDir, 'friendpb.proto'),
-        path.join(protoDir, 'visitpb.proto'),
-        path.join(protoDir, 'notifypb.proto'),
-        path.join(protoDir, 'taskpb.proto'),
-        path.join(protoDir, 'itempb.proto'),
+        getResourcePath('proto', 'game.proto'),
+        getResourcePath('proto', 'userpb.proto'),
+        getResourcePath('proto', 'plantpb.proto'),
+        getResourcePath('proto', 'corepb.proto'),
+        getResourcePath('proto', 'shoppb.proto'),
+        getResourcePath('proto', 'friendpb.proto'),
+        getResourcePath('proto', 'visitpb.proto'),
+        getResourcePath('proto', 'notifypb.proto'),
+        getResourcePath('proto', 'taskpb.proto'),
+        getResourcePath('proto', 'itempb.proto'),
     ], { keepCase: true });
 
     // 网关
