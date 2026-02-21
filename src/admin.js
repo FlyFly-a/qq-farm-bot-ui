@@ -310,7 +310,7 @@ function startAdminServer(dataProvider) {
             const ui = store.getUI();
             const offlineReminder = store.getOfflineReminder
                 ? store.getOfflineReminder()
-                : { endpoint: 'http://www.ggsuper.com.cn/push/api/v1/sendMsg3_New.php', token: '', title: '账号下线提醒', msg: '账号下线', offlineDeleteSec: 120 };
+                : { channel: 'webhook', reloginUrlMode: 'none', endpoint: '', token: '', title: '账号下线提醒', msg: '账号下线', offlineDeleteSec: 120 };
             res.json({ ok: true, data: { intervals, strategy, preferredSeed, friendQuietHours, automation, ui, offlineReminder } });
         } catch (e) {
             res.status(500).json({ ok: false, error: e.message });
@@ -448,7 +448,6 @@ function startAdminServer(dataProvider) {
             res.status(500).json({ ok: false, error: e.message });
         }
     });
-
 
     app.get('/', (req, res) => {
         res.sendFile(path.join(panelDir, 'index.html'));

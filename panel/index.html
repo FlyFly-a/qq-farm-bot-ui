@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>QQ农场智能助手</title>
   <link rel="icon" type="image/svg+xml" href="icon.svg">
-  <link rel="stylesheet" href="style.css?v=2026022002">
+  <link rel="stylesheet" href="style.css?v=2026022011">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
@@ -318,10 +318,42 @@
               </div>
               <div class="card-head" style="margin-top:12px"><h3><i class="fas fa-bell"></i> 下线提醒</h3></div>
               <div class="settings-grid">
-                <div class="form-group full"><label>接口地址</label><input id="offline-reminder-endpoint" class="form-control" type="text" placeholder="http://www.ggsuper.com.cn/push/api/v1/sendMsg3_New.php"></div>
+                <div class="form-group">
+                  <label>推送渠道</label>
+                  <select id="offline-reminder-channel" class="form-control">
+                    <option value="webhook" selected>webhook(发送到你的接口)</option>
+                    <option value="qmsg">qmsg</option>
+                    <option value="serverchan">serverchan</option>
+                    <option value="pushplus">pushplus</option>
+                    <option value="pushplushxtrip">pushplushxtrip</option>
+                    <option value="dingtalk">dingtalk</option>
+                    <option value="wecom">wecom</option>
+                    <option value="bark">bark</option>
+                    <option value="gocqhttp">gocqhttp</option>
+                    <option value="onebot">onebot</option>
+                    <option value="atri">atri</option>
+                    <option value="pushdeer">pushdeer</option>
+                    <option value="igot">igot</option>
+                    <option value="telegram">telegram</option>
+                    <option value="feishu">feishu</option>
+                    <option value="ifttt">ifttt</option>
+                    <option value="wecombot">wecombot</option>
+                    <option value="discord">discord</option>
+                    <option value="wxpusher">wxpusher</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>重登录链接</label>
+                  <select id="offline-reminder-relogin-url-mode" class="form-control">
+                    <option value="none" selected>不需要</option>
+                    <option value="qq_link">QQ直链</option>
+                    <option value="qr_link">二维码链接</option>
+                  </select>
+                </div>
+                <div class="form-group full"><label>接口地址</label><input id="offline-reminder-endpoint" class="form-control" type="text"></div>
                 <div class="form-group"><label>token</label><input id="offline-reminder-token" class="form-control" type="text" placeholder="接收端 token"></div>
-                <div class="form-group"><label>title</label><input id="offline-reminder-title" class="form-control" type="text" placeholder="提醒标题"></div>
-                <div class="form-group"><label>msg</label><input id="offline-reminder-msg" class="form-control" type="text" placeholder="提醒内容"></div>
+                <div class="form-group"><label>标题</label><input id="offline-reminder-title" class="form-control" type="text" placeholder="提醒标题"></div>
+                <div class="form-group"><label>内容</label><input id="offline-reminder-msg" class="form-control" type="text" placeholder="提醒内容"></div>
                 <div class="form-group"><label>离线删除账号（秒）</label><input id="offline-delete-seconds" class="form-control" type="number" min="1" step="1" placeholder="默认 120"></div>
               </div>
               <div class="settings-actions">
@@ -363,10 +395,10 @@
     </div>
   </div>
 
-  <script src="js/core.js?v=2026022002"></script>
-  <script src="js/polling-accounts.js?v=2026022002"></script>
-  <script src="js/pages.js?v=2026022002"></script>
-  <script src="js/modal-accounts.js?v=2026022002"></script>
-  <script src="js/init.js?v=2026022002"></script>
+  <script src="js/core.js?v=2026022011"></script>
+  <script src="js/polling-accounts.js?v=2026022011"></script>
+  <script src="js/pages.js?v=2026022011"></script>
+  <script src="js/modal-accounts.js?v=2026022011"></script>
+  <script src="js/init.js?v=2026022011"></script>
 </body>
 </html>

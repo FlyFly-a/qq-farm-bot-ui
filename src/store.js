@@ -8,8 +8,16 @@ const { getDataFile, ensureDataDir } = require('./runtime-paths');
 const STORE_FILE = getDataFile('store.json');
 const ACCOUNTS_FILE = getDataFile('accounts.json');
 const ALLOWED_PLANTING_STRATEGIES = ['preferred', 'level', 'max_exp', 'max_fert_exp', 'max_profit', 'max_fert_profit'];
+const PUSHOO_CHANNELS = new Set([
+    'webhook', 'qmsg', 'serverchan', 'pushplus', 'pushplushxtrip',
+    'dingtalk', 'wecom', 'bark', 'gocqhttp', 'onebot', 'atri',
+    'pushdeer', 'igot', 'telegram', 'feishu', 'ifttt', 'wecombot',
+    'discord', 'wxpusher',
+]);
 const DEFAULT_OFFLINE_REMINDER = {
-    endpoint: 'http://www.ggsuper.com.cn/push/api/v1/sendMsg3_New.php',
+    channel: 'webhook',
+    reloginUrlMode: 'none',
+    endpoint: '',
     token: '',
     title: '账号下线提醒',
     msg: '账号下线',
@@ -70,9 +78,25 @@ function normalizeOfflineReminder(input) {
     if (!Number.isFinite(offlineDeleteSec) || offlineDeleteSec < 1) {
         offlineDeleteSec = DEFAULT_OFFLINE_REMINDER.offlineDeleteSec;
     }
+    const rawChannel = (src.channel !== undefined && src.channel !== null)
+        ? String(src.channel).trim().toLowerCase()
+        : '';
     const endpoint = (src.endpoint !== undefined && src.endpoint !== null)
         ? String(src.endpoint).trim()
         : DEFAULT_OFFLINE_REMINDER.endpoint;
+    const migratedChannel = rawChannel
+        || (PUSHOO_CHANNELS.has(String(endpoint || '').trim().toLowerCase())
+            ? String(endpoint || '').trim().toLowerCase()
+            : DEFAULT_OFFLINE_REMINDER.channel);
+    const channel = PUSHOO_CHANNELS.has(migratedChannel)
+        ? migratedChannel
+        : DEFAULT_OFFLINE_REMINDER.channel;
+    const rawReloginUrlMode = (src.reloginUrlMode !== undefined && src.reloginUrlMode !== null)
+        ? String(src.reloginUrlMode).trim().toLowerCase()
+        : DEFAULT_OFFLINE_REMINDER.reloginUrlMode;
+    const reloginUrlMode = new Set(['none', 'qq_link', 'qr_link']).has(rawReloginUrlMode)
+        ? rawReloginUrlMode
+        : DEFAULT_OFFLINE_REMINDER.reloginUrlMode;
     const token = (src.token !== undefined && src.token !== null)
         ? String(src.token).trim()
         : DEFAULT_OFFLINE_REMINDER.token;
@@ -83,6 +107,8 @@ function normalizeOfflineReminder(input) {
         ? String(src.msg).trim()
         : DEFAULT_OFFLINE_REMINDER.msg;
     return {
+        channel,
+        reloginUrlMode,
         endpoint,
         token,
         title,
@@ -404,7 +430,8 @@ function getOfflineReminder() {
 }
 
 function setOfflineReminder(cfg) {
-    globalConfig.offlineReminder = normalizeOfflineReminder(cfg);
+    const current = normalizeOfflineReminder(globalConfig.offlineReminder);
+    globalConfig.offlineReminder = normalizeOfflineReminder({ ...current, ...(cfg || {}) });
     saveGlobalConfig();
     return getOfflineReminder();
 }

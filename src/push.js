@@ -1,12 +1,8 @@
 /**
- * 推送接口封装
- * 我本想让用户自己写post的json请求体，但感觉他们应该不会，只能这样了
+ * 推送接口封装（基于 pushoo）
  */
 
-const axios = require('axios');
-
-const GG_PUSH_URL = 'http://www.ggsuper.com.cn/push/api/v1/sendMsg3_New.php';
-const GG_PUSH_SUCCESS_CODE = '80000000';
+const pushoo = require('pushoo').default;
 
 function assertRequiredText(name, value) {
     const text = String(value || '').trim();
@@ -19,67 +15,47 @@ function assertRequiredText(name, value) {
 /**
  * 发送推送
  * @param {object} payload
+ * @param {string} payload.channel 必填 推送渠道（pushoo 平台名，如 webhook）
+ * @param {string} [payload.endpoint] webhook 接口地址（channel=webhook 时使用）
+ * @param {string} payload.token 必填 推送 token
  * @param {string} payload.title 必填 推送标题
- * @param {string} payload.msg 必填 推送内容
- * @param {string} payload.token
- * @param {string} [payload.url] 点击跳转链接
- * @param {string} [payload.sender] 发送者
- * @param {number} [payload.issecure=0] 固定值 0
- * @param {string} [payload.endpoint] 自定义接口地址
- * @param {object} [options]
- * @param {number} [options.timeoutMs=10000] 请求超时毫秒
- * @param {string} [options.endpoint] 
+ * @param {string} payload.content 必填 推送内容
  * @returns {Promise<{ok: boolean, code: string, msg: string, raw: any}>}
  */
-async function sendGgPushMessage(payload = {}, options = {}) {
+async function sendPushooMessage(payload = {}) {
+    const channel = assertRequiredText('channel', payload.channel);
+    const endpoint = String(payload.endpoint || '').trim();
+    const rawToken = String(payload.token || '').trim();
+    const token = channel === 'webhook' ? rawToken : assertRequiredText('token', rawToken);
     const title = assertRequiredText('title', payload.title);
-    const msg = assertRequiredText('msg', payload.msg);
-    const token = assertRequiredText('token', payload.token);
-    const timeoutMs = Math.max(1000, Number(options.timeoutMs) || 10000);
+    const content = assertRequiredText('content', payload.content);
 
-    const body = {
-        title,
-        msg,
-        token,
-        issecure: 0,
-    };
-
-    if (payload.url !== undefined && payload.url !== null && String(payload.url).trim()) {
-        body.url = String(payload.url).trim();
-    }
-    if (payload.sender !== undefined && payload.sender !== null && String(payload.sender).trim()) {
-        body.sender = String(payload.sender).trim();
-    }
-    if (payload.issecure !== undefined && payload.issecure !== null) {
-        body.issecure = Number(payload.issecure) || 0;
+    const options = {};
+    if (channel === 'webhook') {
+        const url = assertRequiredText('endpoint', endpoint);
+        options.webhook = { url, method: 'POST' };
     }
 
-    const endpoint = String(options.endpoint || payload.endpoint || GG_PUSH_URL).trim() || GG_PUSH_URL;
-    const response = await axios.post(endpoint, body, {
-        timeout: timeoutMs,
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        validateStatus: () => true,
-    });
+    const request = { title, content };
+    if (token) request.token = token;
+    if (channel === 'webhook') request.options = options;
 
-    const data = (response && response.data && typeof response.data === 'object')
-        ? response.data
-        : {};
-    const code = String(data.code || '');
-    const message = String(data.msg || data.message || '');
-    const ok = code === GG_PUSH_SUCCESS_CODE;
+    const result = await pushoo(channel, request);
+
+    const raw = (result && typeof result === 'object') ? result : { data: result };
+    const hasError = !!(raw && raw.error);
+    const code = String(raw.code || raw.errcode || (hasError ? 'error' : 'ok'));
+    const message = String(raw.msg || raw.message || (hasError ? (raw.error.message || 'push failed') : 'ok'));
+    const ok = !hasError && (code === 'ok' || code === '0' || code === '' || String(raw.status || '').toLowerCase() === 'success');
 
     return {
         ok,
         code,
         msg: message,
-        raw: data,
+        raw,
     };
 }
 
 module.exports = {
-    GG_PUSH_URL,
-    GG_PUSH_SUCCESS_CODE,
-    sendGgPushMessage,
+    sendPushooMessage,
 };

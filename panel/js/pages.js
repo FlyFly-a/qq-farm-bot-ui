@@ -536,18 +536,44 @@ if (changeAdminPasswordBtn) {
 }
 
 const saveOfflineReminderBtn = document.getElementById('btn-save-offline-reminder');
+const PUSHOO_CHANNELS = new Set([
+    'webhook', 'qmsg', 'serverchan', 'pushplus', 'pushplushxtrip',
+    'dingtalk', 'wecom', 'bark', 'gocqhttp', 'onebot', 'atri',
+    'pushdeer', 'igot', 'telegram', 'feishu', 'ifttt', 'wecombot',
+    'discord', 'wxpusher',
+]);
+function syncOfflineReminderChannelUI() {
+    const channelEl = $('offline-reminder-channel');
+    const endpointEl = $('offline-reminder-endpoint');
+    if (!channelEl || !endpointEl) return;
+    const channel = String(channelEl.value || 'webhook').trim() || 'webhook';
+    const editable = channel === 'webhook';
+    endpointEl.disabled = !editable;
+}
+
+const offlineReminderChannelEl = document.getElementById('offline-reminder-channel');
+if (offlineReminderChannelEl) {
+    offlineReminderChannelEl.addEventListener('change', syncOfflineReminderChannelUI);
+    syncOfflineReminderChannelUI();
+}
 if (saveOfflineReminderBtn) {
     saveOfflineReminderBtn.addEventListener('click', async () => {
+        const channel = String((($('offline-reminder-channel') || {}).value || 'webhook')).trim() || 'webhook';
+        const reloginUrlMode = String((($('offline-reminder-relogin-url-mode') || {}).value || 'none')).trim() || 'none';
         const endpoint = String((($('offline-reminder-endpoint') || {}).value || '')).trim();
         const token = String((($('offline-reminder-token') || {}).value || '')).trim();
         const title = String((($('offline-reminder-title') || {}).value || '')).trim();
         const msg = String((($('offline-reminder-msg') || {}).value || '')).trim();
         let offlineDeleteSec = parseInt((($('offline-delete-seconds') || {}).value || ''), 10);
         if (!Number.isFinite(offlineDeleteSec) || offlineDeleteSec < 1) offlineDeleteSec = 120;
+        const savePayload = { channel, reloginUrlMode, token, title, msg, offlineDeleteSec };
+        if (channel === 'webhook') {
+            if (endpoint) savePayload.endpoint = endpoint;
+        }
 
         saveOfflineReminderBtn.disabled = true;
         try {
-            const ret = await api('/api/settings/offline-reminder', 'POST', { endpoint, token, title, msg, offlineDeleteSec });
+            const ret = await api('/api/settings/offline-reminder', 'POST', savePayload);
             if (!ret) {
                 alert('保存下线提醒设置失败');
                 return;
@@ -610,7 +636,20 @@ async function loadSettings() {
             applyTheme(data.ui.theme);
         }
         const reminder = (data.offlineReminder && typeof data.offlineReminder === 'object') ? data.offlineReminder : {};
-        if ($('offline-reminder-endpoint')) $('offline-reminder-endpoint').value = String(reminder.endpoint || 'http://www.ggsuper.com.cn/push/api/v1/sendMsg3_New.php');
+        const savedChannel = String(reminder.channel || '').trim().toLowerCase();
+        if ($('offline-reminder-channel')) {
+            $('offline-reminder-channel').value = PUSHOO_CHANNELS.has(savedChannel) ? savedChannel : 'webhook';
+        }
+        const reloginUrlMode = String(reminder.reloginUrlMode || 'none').trim();
+        if ($('offline-reminder-relogin-url-mode')) {
+            const reloginUrlModeEl = $('offline-reminder-relogin-url-mode');
+            const allow = new Set(['none', 'qq_link', 'qr_link']);
+            reloginUrlModeEl.value = allow.has(reloginUrlMode) ? reloginUrlMode : 'none';
+        }
+        if ($('offline-reminder-endpoint')) {
+            $('offline-reminder-endpoint').value = String(reminder.endpoint || '').trim();
+        }
+        syncOfflineReminderChannelUI();
         if ($('offline-reminder-token')) $('offline-reminder-token').value = String(reminder.token || '');
         if ($('offline-reminder-title')) $('offline-reminder-title').value = String(reminder.title || '账号下线提醒');
         if ($('offline-reminder-msg')) $('offline-reminder-msg').value = String(reminder.msg || '账号下线');
