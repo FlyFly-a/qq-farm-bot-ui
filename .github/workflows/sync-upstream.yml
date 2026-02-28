@@ -1,0 +1,54 @@
+name: Sync with Upstream
+
+on:
+  # 1. 定时同步：每天 UTC 0:00 (北京时间 8:00) 执行
+  schedule:
+    - cron: '0 0 * * *'
+  # 2. 允许手动触发：方便在急需更新时立即运行
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      # 检出当前仓库代码
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 获取完整历史以便合并
+
+      # 配置 Git 用户信息
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+      # 添加上游仓库地址
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/Penty-d/qq-farm-bot-ui.git
+
+      # 获取上游最新代码
+      - name: Fetch upstream
+        run: |
+          git fetch upstream
+
+      # 合并上游代码到本地主分支
+      # 【重要】请确认原仓库的主分支是 main 还是 master，此处假设为 main
+      - name: Merge upstream changes
+        run: |
+          git checkout main
+          git merge upstream/main
+          
+          # 如果合并成功且有更新，则推送；如果没有更新或冲突，脚本会在此处停止或报错
+          if [ $(git rev-parse HEAD) != $(git rev-parse upstream/main) ]; then
+            echo "Changes detected, pushing to origin..."
+            git push origin main
+          else
+            echo "Already up to date."
+          fi
+
+      # 处理合并冲突的备选方案（可选）
+      # 如果经常发生冲突，上面的 merge 可能会失败导致 Action 红叉。
+      # 对于纯同步且不想解决冲突的情况，可以使用 rebase 或 reset，但这会覆盖你的修改，慎用！
+      # 这里推荐使用 merge，冲突时会失败，提醒你手动介入。
