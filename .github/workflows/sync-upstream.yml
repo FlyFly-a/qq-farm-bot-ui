@@ -1,0 +1,48 @@
+name: Sync with Upstream
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch: # 允许手动触发
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # 关键：使用你的 PAT 进行签出，这样后续的所有 Git 推送都会被视为“你本人”的操作
+          token: ${{ secrets.MY_GIT_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/Penty-d/qq-farm-bot-ui.git
+          git fetch upstream
+
+      - name: Merge and Push
+        run: |
+          # 切换到 main 分支
+          git checkout main
+          
+          # 合并上游分支
+          git merge upstream/main --no-edit
+
+          # 检查本地是否有领先于远程仓库的提交
+          AHEAD=$(git rev-list origin/main..HEAD --count)
+
+          if [ "$AHEAD" -gt 0 ]; then
+            echo "发现 $AHEAD 个新提交，正在通过 PAT 推送以触发 Docker 构建..."
+            git push origin main
+          else
+            echo "代码已经是最新，无需同步。"
+          fi
