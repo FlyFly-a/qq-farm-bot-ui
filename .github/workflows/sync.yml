@@ -1,0 +1,100 @@
+name: Sync & Build
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      UPSTREAM_URL: https://github.com/Penty-d/qq-farm-bot-ui.git
+      WORKFLOW_PATH: .github/workflows/sync.yml
+      SHA_FILE: .last_upstream_sha
+    steps:
+      - name: Get upstream HEAD SHA
+        id: get_sha
+        run: |
+          sha=$(git ls-remote $UPSTREAM_URL HEAD | cut -f1)
+          echo "UPSTREAM_SHA=$sha" >> $GITHUB_ENV
+
+      - name: Checkout your repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: main
+
+      - name: Read last synced SHA
+        id: read_sha
+        run: |
+          if [ -f "$SHA_FILE" ]; then
+            LAST_SHA=$(cat "$SHA_FILE")
+          else
+            LAST_SHA=""
+          fi
+          echo "LAST_SHA=$LAST_SHA" >> $GITHUB_ENV
+
+      - name: Check if update needed
+        id: check
+        run: |
+          if [ "$UPSTREAM_SHA" = "$LAST_SHA" ]; then
+            echo "UPDATE=false" >> $GITHUB_ENV
+          else
+            echo "UPDATE=true" >> $GITHUB_ENV
+          fi
+
+      - name: Exit if no update
+        if: env.UPDATE == 'false'
+        run: echo "✅ No upstream changes."
+
+      - name: Full checkout (for sync)
+        if: env.UPDATE == 'true'
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+          ref: main
+
+      - name: Backup workflow
+        if: env.UPDATE == 'true'
+        run: |
+          mkdir -p /tmp/backup
+          cp "$WORKFLOW_PATH" /tmp/backup/ || true
+
+      - name: Reset to upstream
+        if: env.UPDATE == 'true'
+        run: |
+          git remote add upstream "$UPSTREAM_URL"
+          git fetch upstream
+          git reset --hard upstream/main
+
+      - name: Restore workflow and save SHA
+        if: env.UPDATE == 'true'
+        run: |
+          mkdir -p "$(dirname "$WORKFLOW_PATH")"
+          cp /tmp/backup/sync.yml "$WORKFLOW_PATH"
+          echo "$UPSTREAM_SHA" > "$SHA_FILE"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$WORKFLOW_PATH" "$SHA_FILE"
+          git commit -m "Sync with upstream @ $UPSTREAM_SHA"
+          
+          # 🔴 关键修改：使用 --force 强制推送，覆盖远程历史
+          git push --force origin main
+
+      - name: Login to Docker Hub
+        if: env.UPDATE == 'true'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push image
+        if: env.UPDATE == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./core/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/qq-farm-bot-ui:latest
