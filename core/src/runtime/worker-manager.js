@@ -104,9 +104,9 @@ function createWorkerManager(options) {
             const auto = (cfg && cfg.automation) ? cfg.automation : {};
             if (!auto.random_logout) return;
 
-            const minMs = Math.max(1, Number(auto.random_logout_min) || 60) * 60 * 1000;
-            const maxMs = Math.max(minMs, Number(auto.random_logout_max) || 180) * 60 * 1000;
-            const delayMs = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
+            const minVal = Math.max(1, Number.parseInt(auto.random_logout_min, 10) || 60);
+            const maxVal = Math.max(minVal, Number.parseInt(auto.random_logout_max, 10) || 180);
+            const delayMs = Math.floor(Math.random() * ((maxVal - minVal + 1) * 60 * 1000)) + minVal * 60 * 1000;
             const minutes = Math.round(delayMs / 60000);
 
             log('系统', `账号 ${account.name} 将在 ${minutes} 分钟后随机登出`, {
