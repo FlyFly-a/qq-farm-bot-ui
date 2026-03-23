@@ -130,6 +130,9 @@ const localSettings = ref({
     farm_bug: false,
     task: false,
     sell: false,
+    random_logout: false,
+    random_logout_min: 60,
+    random_logout_max: 180,
     friend: false,
     farm_push: false,
     land_upgrade: false,
@@ -454,6 +457,9 @@ function syncLocalSettings() {
         farm_bug: false,
         task: false,
         sell: false,
+        random_logout: false,
+        random_logout_min: 60,
+        random_logout_max: 180,
         friend: false,
         farm_push: false,
         land_upgrade: false,
@@ -489,6 +495,9 @@ function syncLocalSettings() {
         farm_bug: false,
         task: false,
         sell: false,
+        random_logout: false,
+        random_logout_min: 60,
+        random_logout_max: 180,
         friend: false,
         farm_push: false,
         land_upgrade: false,
@@ -1363,6 +1372,7 @@ async function handleTestOffline() {
             <BaseSwitch v-model="localSettings.automation.farm_manage" label="自动打理农场" />
             <BaseSwitch v-model="localSettings.automation.task" label="自动做任务" />
             <BaseSwitch v-model="localSettings.automation.sell" label="自动卖果实" />
+            <BaseSwitch v-model="localSettings.automation.random_logout" label="随机登出" />
             <BaseSwitch v-model="localSettings.automation.friend" label="自动好友互动" />
             <BaseSwitch v-model="localSettings.automation.farm_push" label="推送触发巡田" />
             <BaseSwitch v-model="localSettings.automation.land_upgrade" label="自动升级土地" />
@@ -1374,6 +1384,29 @@ async function handleTestOffline() {
             <BaseSwitch v-model="localSettings.automation.open_server_gift" label="自动开服红包" />
             <BaseSwitch v-model="localSettings.automation.fertilizer_gift" label="自动填充化肥" />
             <BaseSwitch v-model="localSettings.automation.fertilizer_buy" label="自动购买化肥" />
+          </div>
+
+          <div v-if="localSettings.automation.random_logout" class="border border-purple-200 rounded bg-purple-50/60 p-3 dark:border-purple-800/60 dark:bg-purple-900/10">
+            <div class="mb-2 text-sm text-purple-800 font-medium dark:text-purple-300">
+              随机登出时间范围
+            </div>
+            <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <BaseInput
+                v-model.number="localSettings.automation.random_logout_min"
+                label="最短在线时间（分钟）"
+                type="number"
+                min="1"
+              />
+              <BaseInput
+                v-model.number="localSettings.automation.random_logout_max"
+                label="最长在线时间（分钟）"
+                type="number"
+                min="1"
+              />
+            </div>
+            <p class="mt-2 text-xs text-purple-700 dark:text-purple-300">
+              账号启动后，将在设定范围内随机选择一个时间自动停止运行。
+            </p>
           </div>
 
           <div v-if="localSettings.automation.fertilizer_buy" class="border border-cyan-200 rounded bg-cyan-50/60 p-3 dark:border-cyan-800/60 dark:bg-cyan-900/10">
