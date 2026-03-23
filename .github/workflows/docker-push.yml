@@ -1,35 +1,38 @@
-name: Docker Auto Build
+name: Docker 自动构建
 
 on:
   push:
-    branches: [ "main" ]  # 只要 main 分支有变动就触发
-  workflow_dispatch:      # 允许手动点击运行
+    branches: [ "main" ]  # 当 main 分支有变动（包括自动同步）时触发
+  workflow_dispatch:      # 允许在 Actions 页面手动点击按钮触发
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
+      - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: Set up QEMU
+      - name: 设置 QEMU
         uses: docker/setup-qemu-action@v3
 
-      - name: Set up Docker Buildx
+      - name: 设置 Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to Docker Hub
+      - name: 登录 Docker Hub
         uses: docker/login-action@v3
         with:
+          # 对应 GitHub Settings 里的 Secrets 名字
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and Push
+      - name: 构建并推送镜像
         uses: docker/build-push-action@v5
         with:
+          # 关键点：指定原作者 Dockerfile 所在的 core 文件夹 [1.1]
           context: ./core
           file: ./core/Dockerfile
           push: true
-          # 自动使用你的用户名作为镜像名前缀
+          # 推送到你自己的仓库：ojbk666666/qq-farm-bot-ui [1.2]
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/qq-farm-bot-ui:latest
-          platforms: linux/amd64,linux/arm64 
+          # 确保 iStoreOS (x86 和 ARM64) 都能正常运行
+          platforms: linux/amd64,linux/arm64
