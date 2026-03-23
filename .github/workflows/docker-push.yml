@@ -29,7 +29,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           # 关键点：指定原作者 Dockerfile 所在的 core 文件夹 [1.1]
-          context: ./core
+          context: .
           file: ./core/Dockerfile
           push: true
           # 推送到你自己的仓库：ojbk666666/qq-farm-bot-ui [1.2]
