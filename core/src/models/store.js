@@ -80,6 +80,9 @@ const DEFAULT_ACCOUNT_CONFIG = {
         month_card: true,
         open_server_gift: true,
         sell: false,
+        random_logout: false,
+        random_logout_min: 60,
+        random_logout_max: 180,
         fertilizer: 'none',
         fertilizer_multi_season: false,
         fertilizer_land_types: [...DEFAULT_FERTILIZER_LAND_TYPES],
@@ -465,6 +468,9 @@ function normalizeAccountConfig(input, fallback = accountFallbackConfig) {
                 cfg.automation[k] = normalizeFertilizerLandTypes(v, cfg.automation[k]);
             } else if (k === 'friend_steal_blacklist') {
                 cfg.automation[k] = normalizeStealPlantBlacklist(v, cfg.automation[k]);
+            } else if (k === 'random_logout_min' || k === 'random_logout_max') {
+                const n = Number(v);
+                cfg.automation[k] = (Number.isFinite(n) && n >= 1) ? Math.floor(n) : cfg.automation[k];
             } else {
                 cfg.automation[k] = !!v;
             }
@@ -738,6 +744,9 @@ function applyConfigSnapshot(snapshot, options = {}) {
                 next.automation[k] = normalizeFertilizerLandTypes(v, next.automation[k]);
             } else if (k === 'friend_steal_blacklist') {
                 next.automation[k] = normalizeStealPlantBlacklist(v, next.automation[k]);
+            } else if (k === 'random_logout_min' || k === 'random_logout_max') {
+                const n = Number(v);
+                next.automation[k] = (Number.isFinite(n) && n >= 1) ? Math.floor(n) : next.automation[k];
             } else {
                 next.automation[k] = !!v;
             }
