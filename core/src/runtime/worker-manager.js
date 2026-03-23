@@ -98,6 +98,35 @@ function createWorkerManager(options) {
         });
         child.send({ type: 'config_sync', config: buildConfigSnapshotForAccount(account.id) });
 
+        // ── 随机登出定时器 ────────────────────────────────────────
+        ;(function scheduleRandomLogout() {
+            const cfg = buildConfigSnapshotForAccount(account.id);
+            const auto = (cfg && cfg.automation) ? cfg.automation : {};
+            if (!auto.random_logout) return;
+
+            const minMs = Math.max(1, Number(auto.random_logout_min) || 60) * 60 * 1000;
+            const maxMs = Math.max(minMs, Number(auto.random_logout_max) || 180) * 60 * 1000;
+            const delayMs = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
+            const minutes = Math.round(delayMs / 60000);
+
+            log('系统', `账号 ${account.name} 将在 ${minutes} 分钟后随机登出`, {
+                accountId: String(account.id),
+                accountName: account.name,
+            });
+
+            managerScheduler.setTimeoutTask(`random_logout_${account.id}`, delayMs, () => {
+                const w = workers[account.id];
+                if (!w || w.stopping) return;
+                log('系统', `账号 ${account.name} 达到随机登出时间，正在停止`, {
+                    accountId: String(account.id),
+                    accountName: account.name,
+                });
+                addAccountLog('random_logout', `账号 ${account.name} 随机登出`, account.id, account.name, { delayMs });
+                stopWorker(account.id);
+            });
+        })();
+        // ─────────────────────────────────────────────────────────
+
         // 监听消息
         child.on('message', (msg) => {
             handleWorkerMessage(account.id, msg);
@@ -142,6 +171,7 @@ function createWorkerManager(options) {
 
         const proc = worker.process;
         worker.stopping = true;
+        managerScheduler.clear(`random_logout_${accountId}`);
         worker.process.send({ type: 'stop' });
         // process.kill will happen in 'exit' handler or we can force it
         managerScheduler.setTimeoutTask(`force_kill_${accountId}`, 1000, () => {
