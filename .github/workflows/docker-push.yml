@@ -28,6 +28,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./core
+          file: ./core/Dockerfile
           push: true
           # 自动使用你的用户名作为镜像名前缀
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/qq-farm-bot-ui:latest
